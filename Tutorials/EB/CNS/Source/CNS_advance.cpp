@@ -171,6 +171,8 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 		Real nz = norm(i,j,k,2);
 		bool is_eb_inhomog  = true;
 
+		//grad_eb_arr(i,j,k,n) = 0.0;
+
 	      if (iflag(i,j,k).isSingleValued()){
 
 
