@@ -17,18 +17,16 @@ contains
   !
   subroutine compute_diff_wallflux (divw, dxinv, i,j,k, &
        q, qlo, qhi, &
-       grad_eb, glo, ghi, &
        lam, mu, xi, clo, chi, &
        bcent, blo, bhi, &
        apx, axlo, axhi, &
        apy, aylo, ayhi, &
        apz, azlo, azhi)
-    integer, intent(in) :: i,j,k,qlo(3),qhi(3),glo(3),ghi(3),clo(3),chi(3),axlo(3),axhi(3), &
+    integer, intent(in) :: i,j,k,qlo(3),qhi(3),clo(3),chi(3),axlo(3),axhi(3), &
          aylo(3),ayhi(3),azlo(3),azhi(3),blo(3),bhi(3)
     real(rt), intent(in) :: dxinv(3)
     real(rt), intent(out) :: divw(5)
     real(rt), intent(in) :: q  (qlo(1):qhi(1),qlo(2):qhi(2),qlo(3):qhi(3),qvar)
-    real(rt), intent(in) :: grad_eb  (glo(1):ghi(1),glo(2):ghi(2),glo(3):ghi(3),1)
     real(rt), intent(in) :: lam(clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
     real(rt), intent(in) :: mu (clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
     real(rt), intent(in) :: xi (clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
@@ -42,7 +40,7 @@ contains
     real(rt) :: xit, yit, zit, s
     integer :: ixit, iyit, izit, is
     real(rt) :: bct(3), d1, d2, ddinv, cxm, cx0, cxp, cym, cy0, cyp, czm, cz0, czp
-    real(rt) :: u1, v1, w1, u2, v2, w2, T1, T2, dudn, dvdn, dwdn, dTdn
+    real(rt) :: u1, v1, w1, u2, v2, w2, dudn, dvdn, dwdn
     real(rt) :: dudx, dudy, dudz, dvdx, dvdy, dvdz, dwdx, dwdy, dwdz, divu
     real(rt) :: tauxx, tauyy, tauzz, tauxy, tauxz, tauyz, tautmp
     real(rt), parameter :: twoThirds = 2.d0/3.d0
@@ -98,7 +96,6 @@ contains
        u1 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+is,iyit-1:iyit+1,izit-1:izit+1,qu))
        v1 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+is,iyit-1:iyit+1,izit-1:izit+1,qv))
        w1 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+is,iyit-1:iyit+1,izit-1:izit+1,qw))
-       T1 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+is,iyit-1:iyit+1,izit-1:izit+1,qtemp))
 
        !
        ! the line intersects the y-z plane (x = 2*s) at ...
@@ -123,7 +120,6 @@ contains
        u2 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+2*is,iyit-1:iyit+1,izit-1:izit+1,qu))
        v2 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+2*is,iyit-1:iyit+1,izit-1:izit+1,qv))
        w2 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+2*is,iyit-1:iyit+1,izit-1:izit+1,qw))
-       T2 = interp2d(cym,cy0,cyp,czm,cz0,czp, q(i+2*is,iyit-1:iyit+1,izit-1:izit+1,qtemp))
 
     else if (abs(anrmy).ge.abs(anrmx) .and. abs(anrmy).ge.abs(anrmz)) then
        ! z-x plane
@@ -148,7 +144,6 @@ contains
        u1 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+is,izit-1:izit+1,qu))
        v1 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+is,izit-1:izit+1,qv))
        w1 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+is,izit-1:izit+1,qw))
-       T1 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+is,izit-1:izit+1,qtemp))
 
        d2 = (bct(2) - 2.d0*s) * (1.0d0/anrmy)
        xit = bct(1) - d2*anrmx
@@ -168,7 +163,6 @@ contains
        u2 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+2*is,izit-1:izit+1,qu))
        v2 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+2*is,izit-1:izit+1,qv))
        w2 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+2*is,izit-1:izit+1,qw))
-       T2 = interp2d(cxm,cx0,cxp,czm,cz0,czp, q(ixit-1:ixit+1,j+2*is,izit-1:izit+1,qtemp))
 
     else
        ! x-y plane
@@ -193,7 +187,6 @@ contains
        u1 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+is,qu))
        v1 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+is,qv))
        w1 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+is,qw))
-       T1 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+is,qtemp))
        
        d2 = (bct(3) - 2.d0*s) * (1.0d0/anrmz)
        xit = bct(1) - d2*anrmx
@@ -213,7 +206,6 @@ contains
        u2 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+2*is,qu))
        v2 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+2*is,qv))
        w2 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+2*is,qw))
-       T2 = interp2d(cxm,cx0,cxp,cym,cy0,cyp, q(ixit-1:ixit+1,iyit-1:iyit+1,k+2*is,qtemp))
        
     end if
 
@@ -224,8 +216,6 @@ contains
     dudn = -ddinv*(d2*d2*u1-d1*d1*u2)  ! note that the normal vector points toward the wall
     dvdn = -ddinv*(d2*d2*v1-d1*d1*v2)
     dwdn = -ddinv*(d2*d2*w1-d1*d1*w2)
-    dTdn = -ddinv*(d2*d2*(T1-5e2)-d1*d1*(T2-5e2))
-
     !
     ! transform them to d/dx, d/dy and d/dz given transverse derivatives are zero
     dudx = dudn * anrmx
@@ -253,9 +243,6 @@ contains
     divw(2) = dxinv(1) * (dapx*tauxx + dapy*tauxy + dapz*tauxz)
     divw(3) = dxinv(1) * (dapx*tauxy + dapy*tauyy + dapz*tauyz)
     divw(4) = dxinv(1) * (dapx*tauxz + dapy*tauyz + dapz*tauzz)
-
-    divw(5) = -dxinv(1)*2.64e7*grad_eb(i,j,k,1)*apnorm
-    !divw(5) = -dxinv(1)*2.64e7*dTdn*apnorm
  
   end subroutine compute_diff_wallflux
 

@@ -23,7 +23,10 @@ CNS::advance (Real time, Real dt, int iteration, int ncycle)
     MultiFab dSdt(grids,dmap,NUM_STATE,0,MFInfo(),Factory());
     MultiFab Sborder(grids,dmap,NUM_STATE,NUM_GROW,MFInfo(),Factory());
 
- 
+    MultiFab Prim(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
+    MultiFab Prim_eb(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
+    MultiFab grad_eb(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
+  
     MultiFab& C_new = get_new_data(Cost_Type);
     C_new.setVal(0.0);
 
@@ -44,7 +47,7 @@ CNS::advance (Real time, Real dt, int iteration, int ncycle)
 
     // RK2 stage 1
     FillPatch(*this, Sborder, NUM_GROW, time, State_Type, 0, NUM_STATE);
-    compute_dSdt(Sborder, dSdt, 0.5*dt, fr_as_crse, fr_as_fine);
+    compute_dSdt(Sborder, Prim, Prim_eb, grad_eb, dSdt, 0.5*dt, fr_as_crse, fr_as_fine);
     // U^* = U^n + dt*dUdt^n
     MultiFab::LinComb(S_new, 1.0, Sborder, 0, dt, dSdt, 0, 0, NUM_STATE, 0);
     computeTemp(S_new,0);
@@ -52,7 +55,7 @@ CNS::advance (Real time, Real dt, int iteration, int ncycle)
     // RK2 stage 2
     // After fillpatch Sborder = U^n+dt*dUdt^n
     FillPatch(*this, Sborder, NUM_GROW, time+dt, State_Type, 0, NUM_STATE);
-    compute_dSdt(Sborder, dSdt, 0.5*dt, fr_as_crse, fr_as_fine);
+    compute_dSdt(Sborder, Prim, Prim_eb, grad_eb, dSdt, 0.5*dt, fr_as_crse, fr_as_fine);
     // S_new = 0.5*(Sborder+S_old) = U^n + 0.5*dt*dUdt^n
     MultiFab::LinComb(S_new, 0.5, Sborder, 0, 0.5, S_old, 0, 0, NUM_STATE, 0);
     // S_new += 0.5*dt*dSdt
@@ -64,7 +67,7 @@ CNS::advance (Real time, Real dt, int iteration, int ncycle)
 }
 
 void
-CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
+CNS::compute_dSdt (const MultiFab& S, MultiFab& Prim, MultiFab& Prim_eb, MultiFab& grad_eb, MultiFab& dSdt, Real dt,
                    EBFluxRegister* fr_as_crse, EBFluxRegister* fr_as_fine)
 {
     BL_PROFILE("CNS::compute_dSdt()");
@@ -75,7 +78,6 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
     int as_crse = (fr_as_crse != nullptr);
     int as_fine = (fr_as_fine != nullptr);
 
-
     MultiFab& cost = get_new_data(Cost_Type);
 
 
@@ -83,21 +85,17 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
    // 	Define variables required by least squares
    //////////////////////////////////////////////////////////////////////////
 
-    MultiFab Prim(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
-    MultiFab Prim_eb(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
-    MultiFab grad_eb(grids,dmap,1,NUM_GROW,MFInfo(),Factory());
-
     auto const& fact = dynamic_cast<EBFArrayBoxFactory const&>(S.Factory());
     auto const& flags = fact.getMultiEBCellFlagFab();
 
     const Box& domain_box = geom.Domain();
 
-    const int domlo_x = domain_box.smallEnd(0)-5;
-    const int domhi_x = domain_box.bigEnd(0)+5;
-    const int domlo_y = domain_box.smallEnd(1)-5;
-    const int domhi_y = domain_box.bigEnd(1)+5;
-    const int domlo_z = domain_box.smallEnd(2)-5;
-    const int domhi_z = domain_box.bigEnd(2)+5;
+    const int domlo_x = domain_box.smallEnd(0);
+    const int domhi_x = domain_box.bigEnd(0);
+    const int domlo_y = domain_box.smallEnd(1);
+    const int domhi_y = domain_box.bigEnd(1);
+    const int domlo_z = domain_box.smallEnd(2);
+    const int domhi_z = domain_box.bigEnd(2);
 
     const bool on_x_face = !(geom.isPeriodic(0));
     const bool on_y_face = !(geom.isPeriodic(1));
@@ -115,7 +113,6 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 
         for (MFIter mfi(S, MFItInfo().EnableTiling(hydro_tile_size).SetDynamic(true));
                         mfi.isValid(); ++mfi)
-    //for (MFIter mfi (S); mfi.isValid(); ++mfi)
         {
             auto wt = amrex::second();
 
@@ -140,8 +137,8 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 
 	// Initialize eb gradient value to zero
 
-	//set_grad_eb_val(BL_TO_FORTRAN_BOX(bx),
-	//		BL_TO_FORTRAN_ANYD(grad_eb[mfi]));
+	set_grad_eb_val(BL_TO_FORTRAN_BOX(bx),
+			BL_TO_FORTRAN_ANYD(grad_eb[mfi]));
 	
 	/// All required variables 
 	Array4<const Real> const& phi_arr     = Prim.array(mfi);
@@ -163,7 +160,7 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 	const FabArray<EBCellFlagFab>* iflags = &(fact.getMultiEBCellFlagFab());
 	Array4<EBCellFlag const> const& iflag = iflags->const_array(mfi);
 
-	amrex::ParallelFor(amrex::grow(bx,2), 1,
+	amrex::ParallelFor(amrex::grow(bx,0), 1,
         	[=] AMREX_GPU_DEVICE (int i, int j, int k, int n) noexcept
         {
 		Real nx = norm(i,j,k,0);
@@ -173,7 +170,6 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 
 	      if (iflag(i,j,k).isSingleValued()){
 
-
 		// Compute dphidn on the eb here 
               	grad_eb_arr(i,j,k,n) = grad_eb_of_phi_on_centroids_extdir(i, j, k, n, phi_arr, phi_eb_arr,
                         iflag, ccent, bcent, vfrac, nx, ny, nz, is_eb_inhomog,
@@ -181,12 +177,9 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
                         on_y_face, domlo_y, domhi_y,
                         on_z_face, domlo_z, domhi_z);
 
+		//std::cout << vfrac(i,j,k,0) << " " << grad_eb_arr(i,j,k,0) << "\n";
 		}
 	});
-
-	//print_grad_eb(BL_TO_FORTRAN_BOX(bx),
-	//		BL_TO_FORTRAN_ANYD(flag),
-	//		BL_TO_FORTRAN_ANYD(grad_eb[mfi]));
 
 
             //if (1){

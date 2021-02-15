@@ -65,6 +65,13 @@ initialize_EB2 (const Geometry& geom, const int required_coarsening_level,
         auto gshop = EB2::makeShop(pr);
         EB2::Build(gshop, geom, max_coarsening_level, max_coarsening_level, 4);
     }
+
+    else if (geom_type == "cylinder_Tdiff")
+    {
+        EB2::CylinderIF cylinder(2.0, 10.0, 2, {7.5,0.0,0.0}, false);
+        auto gshop = EB2::makeShop(cylinder);
+        EB2::Build(gshop, geom, max_coarsening_level, max_coarsening_level, 4, false);
+    }
     else
     {
         EB2::Build(geom, max_coarsening_level, max_coarsening_level, 4);
