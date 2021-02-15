@@ -1,12 +1,12 @@
-max_step  = 1
+max_step  = 10
 stop_time = 0.1
 
 geometry.is_periodic = 0 0 0
 geometry.coord_sys   = 0  # 0 => cart, 1 => RZ  2=>spherical
 
-geometry.prob_lo     =   -1.25 -5.0 0.0
-geometry.prob_hi     =    1.25 5.0 20.0
-amr.n_cell           =   16 64 128
+geometry.prob_lo     =   0.0 -5.0 -1.25
+geometry.prob_hi     =   20.0 5.0 1.25
+amr.n_cell           =   64 32 8
 
 # >>>>>>>>>>>>>  BC FLAGS <<<<<<<<<<<<<<<<
 # 0 = Interior           3 = Symmetry
@@ -27,12 +27,12 @@ amr.loadbalance_level0_int = 1000
 
 # REFINEMENT / REGRIDDING 
 amr.check_input     = 0       # 
-amr.max_level       = 0       # maximum level number allowed
+amr.max_level       = 2       # maximum level number allowed
 amr.ref_ratio       = 2 2 2 2 # refinement ratio
 amr.regrid_int      = 2 2 2 2 # how often to regrid
-amr.blocking_factor = 16
-amr.max_grid_size   = 64
-amr.n_error_buf     = 2 2 2 2 # number of buffer cells in error est
+amr.blocking_factor = 8
+amr.max_grid_size   = 8
+amr.n_error_buf     = 3 3 3 3 # number of buffer cells in error est
 amr.grid_eff        = 0.7     # what constitutes an efficient grid
 
 # CHECKPOINT FILES
