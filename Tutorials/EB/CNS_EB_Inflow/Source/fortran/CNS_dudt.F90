@@ -276,7 +276,7 @@ contains
     call amrex_deallocate(q)
   end subroutine cns_eb_compute_dudt
 
-  subroutine set_eb_velociities(lo, hi, flag, fglo, fghi,& 
+  subroutine set_eb_velocities(lo, hi, flag, fglo, fghi,& 
 				bcent, blo, bhi, &
 				ebvel, elo, ehi, dx, problo)bind(c,name='set_eb_velocities')
 
@@ -319,7 +319,7 @@ contains
   end do
 
 
-  end subroutine set_eb_velociities
+  end subroutine set_eb_velocities
 
 
 
