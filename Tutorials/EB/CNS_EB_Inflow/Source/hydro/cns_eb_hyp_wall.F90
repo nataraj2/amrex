@@ -7,13 +7,13 @@ module cns_eb_hyp_wall_module
 
 contains
 
-  subroutine compute_hyp_wallflux (divw, i,j,k, rho, u, v, w, p, &
+  subroutine compute_hyp_wallflux (divw, i,j,k, rho, u, v, w, p, ebvel, &
        axm, axp, aym, ayp, azm, azp,time)
     use cns_physics_module, only : gamma
     use cns_module, only : smallp, smallr, umx, umy, umz
     use riemann_module, only : analriem
     integer, intent(in) :: i,j,k
-    real(rt), intent(in) :: rho, u, v, w, p, axm, axp, aym, ayp, azm, azp
+    real(rt), intent(in) :: rho, u, v, w, p, axm, axp, aym, ayp, azm, azp, ebvel(3)
     real(rt), intent(out) :: divw(5)
     
     real(rt) :: apnorm, apnorminv, anrmx, anrmy, anrmz, un
@@ -37,27 +37,9 @@ contains
 
     un = u*anrmx + v*anrmy + w*anrmz
 
-    yval = (j+0.5d0)*0.0078125
-    
-    ublade = 0.0d0	
-    if(yval.ge.0.2d0 .and. yval.le.0.250)then
-    ublade=300.0d0
-    endif
-
-    if(yval.ge.0.40d0 .and. yval.le.0.45)then
-    ublade=300.0d0
-    endif
-
-    if(yval.ge.0.60d0 .and. yval.le.0.65)then
-    ublade=300.0d0
-    endif
-
-    if(yval.ge.0.80d0 .and. yval.le.0.85)then
-    ublade=300.0d0
-    endif
-
-    vblade = 0.0d0
-    wblade = 0.0d0
+    ublade = ebvel(1)
+    vblade = ebvel(2)
+    wblade = ebvel(3)
 
     twouwalldotn = 2.0d0*(ublade*anrmx+vblade*anrmy+wblade*anrmz)
     uwalldotn = (ublade*anrmx+vblade*anrmy+wblade*anrmz)

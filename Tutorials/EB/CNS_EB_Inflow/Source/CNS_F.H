@@ -66,6 +66,7 @@ extern "C" {
     void cns_eb_compute_dudt (const int* lo, const int* hi,
                               amrex_real* dudt, const int* utlo, const int* uthi,
                               const amrex_real* u, const int* ulo, const int* uhi,
+                              const amrex_real* ebvel, const int* elo, const int* ehi,
                               amrex_real* fx, const int* fxlo, const int* fxhi,
                               amrex_real* fy, const int* fylo, const int* fyhi,
                               amrex_real* fz, const int* fzlo, const int* fzhi,
@@ -85,6 +86,11 @@ extern "C" {
                               amrex_real* dm_as_fine, const int* dflo, const int* dfhi,
                               const int* levmsk, const int* lmlo, const int* lmhi,
                               const amrex_real* dx, const amrex_real* dt, const int* level, const amrex_real* time);
+
+    void set_eb_velocities(const int* lo, const int* hi,
+			   const void* flag, const int* fglo, const int* fghi,
+			   const amrex_real* bcent, const int* blo, const int* bhi,
+			   const amrex_real* ebvel, const int* elo, const int* ehi, const amrex_real* dx, const amrex_real* problo);
 
     void cns_tag_denerror (const int* lo, const int* hi,
                            char* tag, const int* tlo, const int* thi,

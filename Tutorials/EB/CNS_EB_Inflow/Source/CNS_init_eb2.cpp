@@ -73,8 +73,8 @@ initialize_EB2 (const Geometry& geom, const int required_coarsening_level,
 	point[2]=0.0;	
 
         RealArray normal;
-	normal[0]=-1.0;
-	normal[1]=0.0;
+	normal[0]=-0.866;
+	normal[1]=-0.5;
 	normal[2]=0.0;
 
         EB2::PlaneIF pf(point, normal);

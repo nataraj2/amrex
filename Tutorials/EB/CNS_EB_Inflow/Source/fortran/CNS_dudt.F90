@@ -5,6 +5,7 @@ module cns_dudt_module
   use cns_module, only : urho, umx, umy, umz, ueden, ueint, utemp, nvar, qvar, &
        actually_2D
   use amrex_mempool_module, only : amrex_allocate, amrex_deallocate
+  use amrex_ebcellflag_module, only : is_single_valued_cell
   implicit none
   private
 
@@ -98,7 +99,7 @@ contains
   end subroutine cns_compute_dudt
 
   subroutine cns_eb_compute_dudt (lo,hi, dudt, utlo, uthi, &
-       u,ulo,uhi,fx,fxlo,fxhi,fy,fylo,fyhi,fz,fzlo,fzhi,flag,fglo,fghi, &
+       u,ulo,uhi,ebvel,elo,ehi,fx,fxlo,fxhi,fy,fylo,fyhi,fz,fzlo,fzhi,flag,fglo,fghi, &
        volfrac,vlo,vhi, bcent,blo,bhi, &
        apx,axlo,axhi,apy,aylo,ayhi,apz,azlo,azhi, &
        centx,cxlo,cxhi,centy,cylo,cyhi,centz,czlo,czhi, &
@@ -112,7 +113,7 @@ contains
     use diff_coef_module, only : compute_diff_coef
     use eb_diffusion_module, only : eb_diff_mol_3d
     use cns_divop_module, only : compute_eb_divop
-    integer, dimension(3), intent(in) :: lo,hi,utlo,uthi,ulo,uhi, &
+    integer, dimension(3), intent(in) :: lo,hi,utlo,uthi,ulo,uhi, elo, ehi,&
          vlo,vhi,axlo,axhi,aylo,ayhi,azlo,azhi, &
          cxlo,cxhi,cylo,cyhi,czlo,czhi, &
          fglo,fghi, blo, bhi, fxlo,fxhi, fylo,fyhi, fzlo,fzhi, &
@@ -120,6 +121,7 @@ contains
     integer, intent(in) :: as_crse_in, as_fine_in
     real(rt), intent(inout) :: dudt(utlo(1):uthi(1),utlo(2):uthi(2),utlo(3):uthi(3),nvar)
     real(rt), intent(in   ) :: u ( ulo(1): uhi(1), ulo(2): uhi(2), ulo(3): uhi(3),nvar)
+    real(rt), intent(in   ) :: ebvel ( elo(1): ehi(1), elo(2): ehi(2), elo(3): ehi(3),3)
     real(rt), intent(inout) :: fx(fxlo(1):fxhi(1),fxlo(2):fxhi(2),fxlo(3):fxhi(3),nvar)
     real(rt), intent(inout) :: fy(fylo(1):fyhi(1),fylo(2):fyhi(2),fylo(3):fyhi(3),nvar)
     real(rt), intent(inout) :: fz(fzlo(1):fzhi(1),fzlo(2):fzhi(2),fzlo(3):fzhi(3),nvar)
@@ -231,7 +233,7 @@ contains
     call bl_proffortfuncstart_int(10)
     call compute_eb_divop(lo,hi,5,dx,dt,fhx,lfxlo,lfxhi,fhy,lfylo,lfyhi,fhz,lfzlo,lfzhi,&
          fx, fxlo, fxhi, fy, fylo, fyhi, fz, fzlo, fzhi, &
-         dudt,utlo,uthi, q,qlo,qhi, lambda, mu, xi, clo, chi, &
+         dudt,utlo,uthi, q,qlo,qhi, ebvel, elo, ehi, lambda, mu, xi, clo, chi, &
          divc, optmp, rediswgt, dvlo,dvhi, &
          dm,dmlo,dmhi, &
          volfrac,vlo,vhi, bcent,blo,bhi, &
@@ -273,5 +275,52 @@ contains
     call amrex_deallocate(divc)
     call amrex_deallocate(q)
   end subroutine cns_eb_compute_dudt
+
+  subroutine set_eb_velociities(lo, hi, flag, fglo, fghi,& 
+				bcent, blo, bhi, &
+				ebvel, elo, ehi, dx, problo)bind(c,name='set_eb_velocities')
+
+  integer, dimension(3), intent(in) :: lo, hi, blo, bhi, elo, ehi, fglo, fghi
+  integer, intent(in) :: flag  (fglo(1):fghi(1),fglo(2):fghi(2),fglo(3):fghi(3))
+  real(rt), intent(in) :: bcent  (blo(1):bhi(1),blo(2):bhi(2),blo(3):bhi(3),3)
+  real(rt), intent(inout) :: ebvel  (elo(1):ehi(1),elo(2):ehi(2),elo(3):ehi(3),3)
+  real(rt), intent(in) :: dx(3), problo(3)
+
+  integer :: i, j, k
+  real(rt) :: xcen, ycen, zcen 
+
+  do k = lo(3)-2, hi(3)+2
+     do j = lo(2)-2, hi(2)+2  
+        do i = lo(1)-2, hi(1)+2
+
+ 	   ebvel(i,j,k,:)=0.0d0
+
+	   if(is_single_valued_cell(flag(i,j,k)))then
+
+	   	xcen = problo(1) + (i+0.5d0)*dx(1) + bcent(i,j,k,1)*dx(1)
+	   	ycen = problo(2) + (j+0.5d0)*dx(2) + bcent(i,j,k,2)*dx(2)
+	   	zcen = problo(3) + (k+0.5d0)*dx(3) + bcent(i,j,k,3)*dx(3)
+
+	   	if(ycen.ge.0.2d0 .and. ycen.le.0.25d0)then
+    	     	   ebvel(i,j,k,1)=300.0d0*cos(3.14150/4.0d0)
+    	     	   ebvel(i,j,k,2)=300.0d0*sin(3.14150/4.0d0)
+    	   	end if
+
+    	   	if(ycen.ge.0.4d0 .and. ycen.le.0.45)then
+    	     	  ebvel(i,j,k,1)=300.0d0*cos(3.1415d0/4.0d0)
+    	     	  ebvel(i,j,k,2)=300.0d0*sin(3.1415d0/4.0d0)
+    	   	end if
+
+
+	   end if
+
+         end do
+      end do
+  end do
+
+
+  end subroutine set_eb_velociities
+
+
 
 end module cns_dudt_module

@@ -54,6 +54,7 @@ contains
        fctrdz, fczlo, fczhi, &
        ebdivop, oplo, ophi, &
        q, qlo, qhi, &
+       ebvel, elo, ehi, &
        lam, mu, xi, clo, chi, &
        divc, optmp, rediswgt, dvlo, dvhi, &
        delm, dmlo, dmhi, &
@@ -82,7 +83,7 @@ contains
     use cns_eb_diff_wall_module, only : compute_diff_wallflux
     integer, intent(in), dimension(3) :: lo, hi, fxlo,fxhi,fylo,fyhi,fzlo,fzhi,oplo,ophi,&
          dvlo,dvhi,dmlo,dmhi,axlo,axhi,aylo,ayhi,azlo,azhi,cxylo,cxyhi,cxzlo,cxzhi,&
-         cyxlo,cyxhi,cyzlo,cyzhi,czxlo,czxhi,czylo,czyhi,vlo,vhi,cflo,cfhi, qlo,qhi, &
+         cyxlo,cyxhi,cyzlo,cyzhi,czxlo,czxhi,czylo,czyhi,vlo,vhi,cflo,cfhi, qlo,qhi, elo, ehi, &
          clo, chi, blo, bhi, fcxlo, fcxhi, fcylo, fcyhi, fczlo, fczhi, &
          rdclo, rdchi, rfclo, rfchi, dflo, dfhi, lmlo, lmhi
     logical, intent(in) :: as_crse, as_fine
@@ -96,6 +97,7 @@ contains
     real(rt), intent(inout) :: fctrdz(fczlo(1):fczhi(1),fczlo(2):fczhi(2),fczlo(3):fczhi(3),ncomp)
     real(rt), intent(inout) :: ebdivop(oplo(1):ophi(1),oplo(2):ophi(2),oplo(3):ophi(3),ncomp)
     real(rt), intent(in) ::   q(qlo(1):qhi(1),qlo(2):qhi(2),qlo(3):qhi(3),qvar)
+    real(rt), intent(in) ::   ebvel(elo(1):ehi(1),elo(2):ehi(2),elo(3):ehi(3),3)
     real(rt), intent(in) :: lam(clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
     real(rt), intent(in) :: mu (clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
     real(rt), intent(in) :: xi (clo(1):chi(1),clo(2):chi(2),clo(3):chi(3))
@@ -408,6 +410,7 @@ contains
                    if (n .eq. 1) then
                       call compute_hyp_wallflux(divhyp(:,iwall), i,j,k, q(i,j,k,qrho), &
                            q(i,j,k,qu), q(i,j,k,qv), q(i,j,k,qw), q(i,j,k,qp), &
+			   ebvel(i,j,k,:), &
                            apx(i,j,k), apx(i+1,j,k), &
                            apy(i,j,k), apy(i,j+1,k), &
                            apz(i,j,k), apz(i,j,k+1),time)

@@ -71,6 +71,8 @@ CNS::compute_dSdt (const MultiFab& S, MultiFab& dSdt, Real dt,
     float timeval = (float) time;
 
     const Real* dx = geom.CellSize();
+    const Real* problo = geom.ProbLo();
+
     const int ncomp = dSdt.nComp();
 
     int as_crse = (fr_as_crse != nullptr);
@@ -81,6 +83,9 @@ CNS::compute_dSdt (const MultiFab& S, MultiFab& dSdt, Real dt,
     auto const& fact = dynamic_cast<EBFArrayBoxFactory const&>(S.Factory());
     auto const& flags = fact.getMultiEBCellFlagFab();
 
+    MultiFab ebvel(grids,dmap,3,NUM_GROW,MFInfo(),Factory());
+  
+			
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -99,6 +104,13 @@ CNS::compute_dSdt (const MultiFab& S, MultiFab& dSdt, Real dt,
 
             const auto& sfab = S[mfi];
             const auto& flag = flags[mfi];
+
+
+	    set_eb_velocities(BL_TO_FORTRAN_BOX(bx),
+		      	      BL_TO_FORTRAN_ANYD(flag),
+		      	      BL_TO_FORTRAN_ANYD((*bndrycent)[mfi]),
+		      	      BL_TO_FORTRAN_ANYD(ebvel[mfi]), dx, problo);
+
 
             //if (1){
             if (flag.getType(bx) == FabType::covered) {
@@ -142,6 +154,7 @@ CNS::compute_dSdt (const MultiFab& S, MultiFab& dSdt, Real dt,
                     cns_eb_compute_dudt(BL_TO_FORTRAN_BOX(bx),
                                         BL_TO_FORTRAN_ANYD(dSdt[mfi]),
                                         BL_TO_FORTRAN_ANYD(S[mfi]),
+				        BL_TO_FORTRAN_ANYD(ebvel[mfi]),
                                         BL_TO_FORTRAN_ANYD(flux[0]),
                                         BL_TO_FORTRAN_ANYD(flux[1]),
                                         BL_TO_FORTRAN_ANYD(flux[2]),

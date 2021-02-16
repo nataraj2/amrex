@@ -51,7 +51,7 @@ int main (int argc, char* argv[])
 
 	Amr amr;
         AmrLevel::SetEBSupportLevel(EBSupport::full);
-        AmrLevel::SetEBMaxGrowCells(CNS::numGrow(),4,2);
+        AmrLevel::SetEBMaxGrowCells(CNS::numGrow(),5,5);
 
         initialize_EB2(amr.Geom(amr.maxLevel()), amr.maxLevel(), amr.maxLevel(),0.0);
 
