@@ -125,14 +125,6 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 
             const auto& flag = flags[mfi];
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////// Compute the required gradients using least squares here //////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// Compute temperature and velocities and store in a MultiFab named Prim
-
-
-
             //if (1){
             if (flag.getType(bx) == FabType::covered) {
                 dSdt[mfi].setVal<RunOn::Host>(0.0, bx, 0, ncomp);
@@ -172,6 +164,12 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
                         dm_as_fine.resize(amrex::grow(bx,1),ncomp);
                     }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////// Compute the required gradients using least squares here //////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+	// Compute temperature and velocities and store in a MultiFab named Prim
 			compute_primitive_variables(BL_TO_FORTRAN_BOX(bx),
                                        BL_TO_FORTRAN_ANYD(S[mfi]),
                                        BL_TO_FORTRAN_ANYD(Prim[mfi]));
@@ -181,21 +179,12 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 			set_eb_dirichlet_for_prim(BL_TO_FORTRAN_BOX(bx),
 				  BL_TO_FORTRAN_ANYD(Prim_eb[mfi]));
 
-	// Initialize eb gradient value to zero
-
-	//set_grad_eb_val(BL_TO_FORTRAN_BOX(bx),
-	//		BL_TO_FORTRAN_ANYD(grad_eb[mfi]));
-	
 	/// All required variables 
 			Array4<const Real> const& phi_arr     = Prim.array(mfi);
 			Array4<const Real> const& phi_eb_arr  = Prim_eb.array(mfi);
 			Array4<      Real> const& grad_eb_arr = grad_eb.array(mfi);
 			Array4<      Real> const& grad_x_arr  = grad_x.array(mfi);
 			Array4<      Real> const& grad_y_arr  = grad_y.array(mfi);
-
-	//print_grad_eb(BL_TO_FORTRAN_BOX(bx),
-	//		BL_TO_FORTRAN_ANYD(flag),
-	//		BL_TO_FORTRAN_ANYD(Prim[mfi]));
 
 			Array4<Real const> const& fcx   = (fact.getFaceCent())[0]->const_array(mfi);
 			Array4<Real const> const& fcy   = (fact.getFaceCent())[1]->const_array(mfi);
