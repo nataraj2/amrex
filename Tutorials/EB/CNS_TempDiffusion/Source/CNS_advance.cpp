@@ -117,7 +117,6 @@ CNS::compute_dSdt (const MultiFab& S,  MultiFab& dSdt, Real dt,
 
         for (MFIter mfi(S, MFItInfo().EnableTiling(hydro_tile_size).SetDynamic(true));
                         mfi.isValid(); ++mfi)
-    //for (MFIter mfi (S); mfi.isValid(); ++mfi)
         {
             auto wt = amrex::second();
 
