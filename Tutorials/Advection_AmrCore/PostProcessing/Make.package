@@ -1,5 +1,5 @@
 CEXE_sources += ${EBASE}.cpp
-
+CEXE_sources += WriteBoxesIntoVTK.cpp
 
 ifneq ($(EBASE), particle_compare)
 ifneq ($(EBASE), WritePlotfileToASCII)
