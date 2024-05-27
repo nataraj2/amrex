@@ -4,7 +4,7 @@
 
 using namespace amrex;
 
-void WriteBoxesIntoVTK(AmrData& amrData)
+void WriteBoxesIntoVTK(const AmrData& amrData)
 {
 
 	const int nLev = amrData.FinestLevel() + 1;

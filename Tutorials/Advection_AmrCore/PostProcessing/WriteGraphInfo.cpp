@@ -15,6 +15,8 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_DataServices.H>
 #include <AMReX_WritePlotFile.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_MultiFabUtil.H>
 
 #include <AMReX_BLFort.H>
 
@@ -52,7 +54,8 @@ Vector<Real> get_coord(const int lev, const int i, const int j, const int k, con
 	return temp;
 }
 
-void WriteBoxesIntoVTK(AmrData& amrData);
+void WriteBoxesIntoVTK(const AmrData& amrData);
+void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask);
 
 //Real getcoord(int i, int j, int k)
 
@@ -113,6 +116,7 @@ main (int   argc,
 	zcoord.resize(8);
 
 	const Vector<Real>& plo = amrData.ProbLo();
+	const Vector<Real>& dx0  = amrData.DxLevel()[0];
 	//const Vector<Real>& phi = amrData.ProbHi();
 	
 	for (int lev=0; lev<nLev; ++lev) {
@@ -135,9 +139,51 @@ main (int   argc,
 	int j_ind = 211;
 	int k_ind = 0;
 
+	// Write the boxes as VTK for visualization
 	WriteBoxesIntoVTK(amrData);
+
+	// Create a finemask on all coarse levels ie. all levels 
+	//except the finest level
+
+	Vector<iMultiFab> finemask;
+	CreateFineMask(amrData, finemask);
+
+	FILE* finemask_vtk;
+    finemask_vtk = fopen("finemask.vtk","w");
+    fprintf(finemask_vtk, "%s\n","# vtk DataFile Version 3.0");
+    fprintf(finemask_vtk, "%s\n","Fine mask data");
+    fprintf(finemask_vtk, "%s\n","ASCII");
+    fprintf(finemask_vtk, "%s\n","DATASET POLYDATA");
+    fprintf(finemask_vtk, "%s %ld %s\n", "POINTS", 0, "float");
+
+	{
+		int lev = 0;
+		if(lev > nLev-2){
+			std::cout << "The finemask multifab will have only one level less. Hence the max level is " << nLev-2 << "\n";
+			exit(0);
+		}
+
+		iMultiFab& finemask_mf = finemask[lev];
+		const BoxArray ba       = amrData.boxArray(lev);
+		for (MFIter mfi(finemask_mf); mfi.isValid(); ++mfi) {
+			Array4<int> const& finemask_array = finemask_mf.array(mfi);
+        	const Box& bx = mfi.validbox();
+       		ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
+				if(finemask_array(i,j,k,0) == 1){	
+       				std::vector<Real> coords = get_coord(lev, i, j, k, dx0, plo);
+            		fprintf(finemask_vtk, "%0.15g %0.15g %0.15g\n", coords[0], coords[1], coords[2]);
+				}
+				else{
+					//std::cout << "Reached a fined cell" << "\n";
+					//exit(0);
+				}
+			});
+		}
+		fclose(finemask_vtk);
+	}
 	
-	const Vector<Real>& dx0  = amrData.DxLevel()[0];
+	exit(0);
+
 
 	for (int lev=0; lev<nLev; ++lev) {
 	  	//const Box  domain       = amrData.ProbDomain()[lev];
