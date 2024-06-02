@@ -20,6 +20,8 @@
 
 #include <AMReX_BLFort.H>
 
+#include <Advection_GNN.H>
+
 extern "C" {
   void transform (const int* lo, const int* hi,
                   const amrex_real* sIn, const int* sInlo, const int* sInhi, const int* ncIn,
@@ -44,20 +46,6 @@ getFileRoot(const std::string& infile)
   std::vector<std::string> tokens = Tokenize(infile,std::string("/"));
   return tokens[tokens.size()-1];
 }
-
-Vector<Real> get_coord(const int lev, const int i, const int j, const int k, const Vector<Real>& dx0, const Vector<Real>& plo)
-{
-	Vector<Real> temp;
-	temp.push_back(plo[0] + (i+0.5)*dx0[0]/std::pow(2,lev));
-	temp.push_back(plo[1] + (j+0.5)*dx0[1]/std::pow(2,lev));
-	temp.push_back(plo[2] + (k+0.5)*dx0[2]/std::pow(2,lev));
-	return temp;
-}
-
-void WriteBoxesIntoVTK(const AmrData& amrData);
-void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask);
-
-//Real getcoord(int i, int j, int k)
 
 int
 main (int   argc,
@@ -133,11 +121,6 @@ main (int   argc,
 		}
 	}
 
-	// CHeck cell
-	int ilev = 2;
-	int i_ind = 200;
-	int j_ind = 211;
-	int k_ind = 0;
 
 	// Write the boxes as VTK for visualization
 	WriteBoxesIntoVTK(amrData);
@@ -147,42 +130,20 @@ main (int   argc,
 
 	Vector<iMultiFab> finemask;
 	CreateFineMask(amrData, finemask);
+	WriteFineMaskIntoVTK(amrData, 1, finemask);
 
-	FILE* finemask_vtk;
-    finemask_vtk = fopen("finemask.vtk","w");
-    fprintf(finemask_vtk, "%s\n","# vtk DataFile Version 3.0");
-    fprintf(finemask_vtk, "%s\n","Fine mask data");
-    fprintf(finemask_vtk, "%s\n","ASCII");
-    fprintf(finemask_vtk, "%s\n","DATASET POLYDATA");
-    fprintf(finemask_vtk, "%s %ld %s\n", "POINTS", 0, "float");
-
-	{
-		int lev = 0;
-		if(lev > nLev-2){
-			std::cout << "The finemask multifab will have only one level less. Hence the max level is " << nLev-2 << "\n";
-			exit(0);
-		}
-
-		iMultiFab& finemask_mf = finemask[lev];
-		const BoxArray ba       = amrData.boxArray(lev);
-		for (MFIter mfi(finemask_mf); mfi.isValid(); ++mfi) {
-			Array4<int> const& finemask_array = finemask_mf.array(mfi);
-        	const Box& bx = mfi.validbox();
-       		ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
-				if(finemask_array(i,j,k,0) == 1){	
-       				std::vector<Real> coords = get_coord(lev, i, j, k, dx0, plo);
-            		fprintf(finemask_vtk, "%0.15g %0.15g %0.15g\n", coords[0], coords[1], coords[2]);
-				}
-				else{
-					//std::cout << "Reached a fined cell" << "\n";
-					//exit(0);
-				}
-			});
-		}
-		fclose(finemask_vtk);
-	}
-	
+	// Build mask to identify cells at coarse-fine interface
+	Vector<iMultiFab> allmasks;
+	//CreateAllMasks(amrData, 
+	CreateAllMasks(amrData, allmasks);
+	WriteAllMasksIntoVTK(amrData, 2, allmasks);
 	exit(0);
+
+	// CHeck cell
+	int ilev = 2;
+	int i_ind = 200;
+	int j_ind = 211;
+	int k_ind = 0;
 
 
 	for (int lev=0; lev<nLev; ++lev) {
@@ -211,27 +172,27 @@ main (int   argc,
             const int* hi = bx.hiVect();	
 			ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
 				std::vector<std::vector<double>> vec_coords;
-				std::vector<Real> coords1 = get_coord(lev, i, j, k, dx0, plo);
+				std::vector<Real> coords1 = get_coords(lev, i, j, k, dx0, plo);
 				vec_coords.push_back(coords1);
 				if(i > lo[0] and i < hi[0])
 				{
-					std::vector<Real> coords = get_coord(lev, i+1, j, k, dx0, plo);
+					std::vector<Real> coords = get_coords(lev, i+1, j, k, dx0, plo);
 					vec_coords.push_back(coords);
-					coords = get_coord(lev, i-1, j, k, dx, plo);
+					coords = get_coords(lev, i-1, j, k, dx, plo);
 					vec_coords.push_back(coords);
 				}
 				if(j > lo[1] and j < hi[1])
 				{
-					std::vector<Real> coords = get_coord(lev, i, j+1, k, dx0, plo);
+					std::vector<Real> coords = get_coords(lev, i, j+1, k, dx0, plo);
 					vec_coords.push_back(coords);
-					coords = get_coord(lev, i, j-1, k, dx, plo);
+					coords = get_coords(lev, i, j-1, k, dx, plo);
 					vec_coords.push_back(coords);
 				}
 				if(k > lo[2] and k < hi[2])
 				{
-					std::vector<Real> coords = get_coord(lev, i, j, k+1, dx0, plo);
+					std::vector<Real> coords = get_coords(lev, i, j, k+1, dx0, plo);
 					vec_coords.push_back(coords);
-					coords = get_coord(lev, i, j, k-1, dx, plo);
+					coords = get_coords(lev, i, j, k-1, dx, plo);
 					vec_coords.push_back(coords);
 				}
 
