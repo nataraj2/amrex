@@ -22,9 +22,9 @@ void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
     for (int lev = 0; lev < nLev-1; ++lev) {
         const IntVect ratio{2};
 
-        finemask[lev] = makeFineMask(phi[lev], phi[lev+1], IntVect(0),
+        finemask[lev] = makeFineMask(phi[lev], phi[lev+1], IntVect(3),
                                           ratio,Periodicity::NonPeriodic(),
-                                          1, 0);
+                                          0, 1);
     }
 
 	/*Vector<Vector<BoxArray> >  grids;
@@ -54,7 +54,7 @@ void WriteFineMaskIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
 
     const Vector<Real>& plo = amrData.ProbLo();
     const Vector<Real>& dx0  = amrData.DxLevel()[0];
-    const int nLev = amrData.FinestLevel() + 1;
+    const int finest_lev = amrData.FinestLevel();
 
     FILE* finemask_vtk;
     finemask_vtk = fopen("finemask.vtk","w");
@@ -64,9 +64,9 @@ void WriteFineMaskIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
     fprintf(finemask_vtk, "%s\n","DATASET POLYDATA");
     fprintf(finemask_vtk, "%s %ld %s\n", "POINTS", 0, "float");
 
-    if(lev > nLev-2){
-       std::cout << "There are only " << nLev << " levels and hence the maximum level specified for WriteFineMaskIntoVTK " << 
-					"can only be " << nLev - 2 << " but the level specified is " << lev << ". Exiting....." << "\n";
+    if(lev > finest_lev){
+       std::cout << "There are only " << finest_lev+1 << " levels and hence the maximum level specified for WriteFineMaskIntoVTK " << 
+					"can only be " << finest_lev << " but the level specified is " << lev << ". Exiting....." << "\n";
        exit(0);
      }
 
@@ -75,7 +75,7 @@ void WriteFineMaskIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
         Array4<int> const& finemask_array = finemask_mf.array(mfi);
         Box bx = mfi.validbox();
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
-            if(finemask_array(i,j,k,0) == 1 and k==1){
+            if(finemask_array(i,j,k,0) == 0 and k==1){
                 std::vector<Real> coords = get_coords(lev, i, j, k, dx0, plo);
                 fprintf(finemask_vtk, "%0.15g %0.15g %0.15g\n", coords[0], coords[1], coords[2]);
             }

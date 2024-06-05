@@ -14,6 +14,14 @@ void WriteBoxesIntoVTK(const AmrData& amrData)
     ycoord.resize(8);
     zcoord.resize(8);
 
+	Vector<MultiFab> phi;
+    phi.resize(nLev);
+    for (int lev = 0; lev < nLev; ++lev) {
+        const BoxArray ba = amrData.boxArray(lev);
+        const DistributionMapping dmap(ba);
+        phi[lev].define(ba,dmap,1,0);
+    }
+
     for (int lev=0; lev<nLev; ++lev) {
         FILE* ba_in_lev_vtk;
         std::string filename = "ba_" + std::to_string(lev) + ".vtk";
@@ -32,8 +40,9 @@ void WriteBoxesIntoVTK(const AmrData& amrData)
         fprintf(ba_in_lev_vtk,"%s %ld %s\n","POINTS", ba.size()*8, "float");
 
         std::cout << "Level is " << lev << "\n";
-        for (int i = 0; i < ba.size(); ++i) {
-            amrex::Box bx = ba[i];
+		MultiFab& phi_mf = phi[lev];
+	    for (MFIter mfi(phi_mf); mfi.isValid(); ++mfi) {
+        	Box bx = mfi.validbox();
             const int* lo = bx.loVect();
             const int* hi = bx.hiVect();
 
@@ -52,7 +61,6 @@ void WriteBoxesIntoVTK(const AmrData& amrData)
                 zcoord[ipt] = plo[2] + zcoord[ipt];
                 fprintf(ba_in_lev_vtk,"%0.15g %0.15g %0.15g\n", xcoord[ipt], ycoord[ipt], zcoord[ipt]);
             }
-
         }
 
         fprintf(ba_in_lev_vtk,"%s %ld %ld\n", "LINES", ba.size()*12, ba.size()*12*3);

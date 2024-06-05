@@ -13,14 +13,12 @@ void CreateAllMasks(const AmrData& amrData, Vector<iMultiFab>& allmasks)
     for (int lev = 0; lev < nLev; ++lev) {
         const BoxArray& ba = amrData.boxArray(lev);
         const DistributionMapping dmap(ba);
-        allmasks[lev].define(ba,dmap,1,1);
+        allmasks[lev].define(ba,dmap,1,3);
         allmasks[lev].setVal(1);
     }
-
-
     for (int lev = 0; lev < nLev; ++lev) {
         const Box& domain     = amrData.ProbDomain()[lev];
-        allmasks[lev].BuildMask(domain,Periodicity::NonPeriodic(),0,1,1,0);
+        allmasks[lev].BuildMask(domain,Periodicity::NonPeriodic(),0,1,2,0);
     }
 }
 
