@@ -1,3 +1,16 @@
+#include <string>
+#include <iostream>
+
+#include <AMReX.H>
+#include "AMReX_ParmParse.H"
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_DataServices.H>
+#include <AMReX_WritePlotFile.H>
+#include <AMReX_iMultiFab.H>
+#include <AMReX_MultiFabUtil.H>
+
+#include <AMReX_BLFort.H>
+
 class Quadruplet {
 public:
     int a, b, c, d;
@@ -59,6 +72,23 @@ public:
 	} 
 };
 
+inline static
+void
+print_usage (int,
+             char* argv[])
+{
+  std::cerr << "usage:\n";
+  std::cerr << argv[0] << " infile=<plotfilename> varNames=v1 v2 ... \n";
+  exit(1);
+}
+
+inline std::string
+getFileRoot(const std::string& infile)
+{
+  std::vector<std::string> tokens = amrex::Tokenize(infile,std::string("/"));
+  return tokens[tokens.size()-1];
+}
+
 inline amrex::Vector<amrex::Real> get_node_coords (const int lev, const int i, const int j, const int k, 
 									 const amrex::Vector<amrex::Real>& dx0, 
 									 const amrex::Vector<amrex::Real>& plo)
@@ -100,6 +130,7 @@ void WriteAllMasksIntoVTK(const amrex::AmrData& amrData,
 						  amrex::Vector<amrex::iMultiFab>& allmasks);
 
 void FindNeighbors(const int lev,
+				   const int finest_lev,
                    const int i,
                    const int j,
                    const int k,
@@ -110,28 +141,16 @@ void FindNeighbors(const int lev,
                    amrex::Vector<amrex::Vector<amrex::Real>>& vec_coords,
 				   QuadrupletStore& quad);
 
-void FindNeighborsFinestLev(const int lev,
-                   const int i,
-                   const int j,
-                   const int k,
-                   amrex::Array4<const int> const& allmasks_array,
-                   const amrex::Vector<amrex::Real>& dx0,
-                   const amrex::Vector<amrex::Real>& plo,
-                   amrex::Vector<amrex::Vector<amrex::Real>>& vec_coords,
-				   QuadrupletStore& quad);
-
-void WriteGraphForAllLevelsExceptFinest(const amrex::AmrData& amrData, 
+void WriteGraphForAllLevels(const amrex::AmrData& amrData, 
 										const amrex::Vector<amrex::iMultiFab>& finemask, 
 										const amrex::Vector<amrex::iMultiFab>& allmasks,
 										const amrex::Vector<amrex::MultiFab>& stateout,
-										FILE* connect);
+										const std::string& file_point_str,
+                                        const std::string& file_neighbors_str,
+                                        const std::string& file_connect_str);
 
-void WriteGraphForFinestLev(const amrex::AmrData& amrData,
-                            const amrex::Vector<amrex::iMultiFab>& allmasks,
-							const amrex::Vector<amrex::MultiFab>& stateout,
-                            FILE* connect);
-
-void WriteSolution(const amrex::AmrData& amrData,
-                   const amrex::Vector<amrex::iMultiFab>& finemask,
+void WriteSolution(const int lev,
+				   const amrex::AmrData& amrData,
+                   const amrex::Vector<amrex::iMultiFab>& allmasks,
                    const amrex::Vector<amrex::MultiFab>& stateout,
-                   FILE* solution);
+                   const std::string& sol_file_string);

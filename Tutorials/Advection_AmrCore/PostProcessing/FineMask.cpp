@@ -1,6 +1,3 @@
-#include <AMReX_DataServices.H>
-#include <AMReX_MultiFabUtil.H>
-
 #include <Advection_GNN.H>
 
 using namespace amrex;
@@ -9,6 +6,7 @@ using namespace amrex;
 void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
 {
 	const int nLev = amrData.FinestLevel() + 1;
+	const int finest_lev = amrData.FinestLevel();
 
 	Vector<MultiFab> phi;
     phi.resize(nLev);
@@ -18,7 +16,15 @@ void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
         phi[lev].define(ba,dmap,1,0);
     }
 
-    finemask.resize(nLev-1);
+    finemask.resize(nLev);
+	for (int lev = 0; lev < nLev; ++lev) {
+        const BoxArray ba = amrData.boxArray(lev);
+        const DistributionMapping dmap(ba);
+        finemask[lev].define(ba,dmap,1,3);
+		finemask[lev].setVal(-100);
+    }
+
+
     for (int lev = 0; lev < nLev-1; ++lev) {
         const IntVect ratio{2};
 
@@ -26,6 +32,8 @@ void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
                                           ratio,Periodicity::NonPeriodic(),
                                           0, 1);
     }
+	
+	finemask[finest_lev].setVal(-100);
 
 	/*Vector<Vector<BoxArray> >  grids;
     Vector<Vector<DistributionMapping>> dmapvec;

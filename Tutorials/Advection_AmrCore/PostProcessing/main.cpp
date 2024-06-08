@@ -8,17 +8,6 @@
   new plotfile has metadata (number of levels, boxarray, grid spacing, etc) that is identical to the original
   plotfile.
  */
-#include <string>
-#include <iostream>
-
-#include "AMReX_ParmParse.H"
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_DataServices.H>
-#include <AMReX_WritePlotFile.H>
-#include <AMReX_iMultiFab.H>
-#include <AMReX_MultiFabUtil.H>
-
-#include <AMReX_BLFort.H>
 
 #include <Advection_GNN.H>
 
@@ -29,23 +18,6 @@ extern "C" {
 }
 
 using namespace amrex;
-
-static
-void
-print_usage (int,
-             char* argv[])
-{
-  std::cerr << "usage:\n";
-  std::cerr << argv[0] << " infile=<plotfilename> varNames=v1 v2 ... \n";
-  exit(1);
-}
-
-std::string
-getFileRoot(const std::string& infile)
-{
-  std::vector<std::string> tokens = Tokenize(infile,std::string("/"));
-  return tokens[tokens.size()-1];
-}
 
 int
 main (int   argc,
@@ -96,37 +68,18 @@ main (int   argc,
     const int nGrow = 0;
     const int nLev = amrData.FinestLevel() + 1;
 	const int finest_lev = amrData.FinestLevel();
-
-
-	std::vector<Real> xcoord, ycoord, zcoord;
-	xcoord.resize(8);
-	ycoord.resize(8);
-	zcoord.resize(8);
-
 	const Vector<Real>& plo = amrData.ProbLo();
 	const Vector<Real>& dx0  = amrData.DxLevel()[0];
-	//const Vector<Real>& phi = amrData.ProbHi();
 	
-	for (int lev=0; lev<nLev; ++lev) {
-      	const BoxArray ba 	    = amrData.boxArray(lev);
-		for (int ibx = 0; ibx < ba.size(); ++ibx) {
-           	amrex::Box bx = ba[ibx];
-           	const int* lo = bx.loVect();
-            const int* hi = bx.hiVect();	
-			ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
-				if(i==lo[0] and k==0){
-					std::cout << "lev, i, j, k " << lev << " " << i << " " << j << " " << k << "\n";
-				}
-			});
-		}
-	}
-
 	// Write the boxes as VTK for visualization
 	WriteBoxesIntoVTK(amrData);
 
 	// Create a finemask on all coarse levels ie. all levels 
-	//except the finest level
+	// except the finest level. Create finemask only if there 
+	// are more than 1 levels - there is no finemasking for 
+	// just a single level mesh 
 	Vector<iMultiFab> finemask;
+	finemask.resize(nLev);
 	if(nLev > 1){	
 		CreateFineMask(amrData, finemask);
 		WriteFineMaskIntoVTK(amrData, 0, finemask);
@@ -135,7 +88,8 @@ main (int   argc,
 	// Build mask to identify cells at coarse-fine interface
 	Vector<iMultiFab> allmasks;
 	CreateAllMasks(amrData, allmasks);
-	WriteAllMasksIntoVTK(amrData, 1, allmasks);
+	WriteAllMasksIntoVTK(amrData, 0, allmasks);
+
 
     Vector<MultiFab> stateout;
 	stateout.resize(nLev);
@@ -160,40 +114,24 @@ main (int   argc,
 		}
     }
 
+	std::cout << "Reaching here" << "\n";
 
-	// Trying to write out a multi level VTK file 
-	// using the unstructured vtk format. Not successful
-
-	/*FILE* solution;
-    std::string file_solution = "solution.vtk";
-    solution = fopen(file_solution.c_str(),"w");
-
-    fprintf(solution,"%s\n","# vtk DataFile Version 3.0");
-    fprintf(solution,"%s\n", "Multi level solution");
-    fprintf(solution,"%s\n","ASCII");
-    fprintf(solution,"%s\n","DATASET UNSTRUCTURED_GRID");	
-
-	WriteSolution(amrData, allmasks, stateout, solution);
-	exit(0);*/
-
-
-	FILE* connect;
-   	std::string file_connect = "connect.vtk";
-    connect = fopen(file_connect.c_str(),"w");
-
-    fprintf(connect,"%s\n","# vtk DataFile Version 3.0");
-    fprintf(connect,"%s\n", "Connectivity");
-    fprintf(connect,"%s\n","ASCII");
-    fprintf(connect,"%s\n","DATASET POLYDATA");
-
-
-	//WriteGraphForAllLevelsExceptFinest(amrData, finemask, allmasks, stateout, connect);
-	if(finest_lev > 0){
-		WriteGraphForFinestLev(amrData, allmasks, stateout, connect);
+	for(int lev=0;lev<=finest_lev;lev++) {
+		std::string sol_file_string = "solution" + std::to_string(lev) + ".vtk";
+		WriteSolution(lev, amrData, allmasks, stateout, sol_file_string);
 	}
+
+	std::cout << "Reaching here" << "\n";
+	std::string file_point_str, file_neighbors_str, file_connect_str;
+	file_point_str = "file_point.vtk";
+	file_neighbors_str = "file_neighbors.vtk";	
+	file_connect_str = "file_connect.vtk";	
+
+	WriteGraphForAllLevels(amrData, finemask, allmasks, stateout, file_point_str, file_neighbors_str, file_connect_str);
 	
 	std::cout  << "Reaching here .... " << "\n";
-		//exit(0);
+	//exit(0);
+	//exit(0);
     // Write result to new plotfile in local folder
     /*std::string outfile=getFileRoot(infile) + "_tr";
     Vector<std::string> outNames;
