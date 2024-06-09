@@ -43,7 +43,7 @@ void WriteAllMasksIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
         iMultiFab& allmasks_mf = allmasks[lev];
         for (MFIter mfi(allmasks_mf, true); mfi.isValid(); ++mfi) {
             Array4<int> const& allmasks_array = allmasks_mf.array(mfi);
-            Box bx = mfi.growntilebox(2);
+            Box bx = mfi.growntilebox(3);
             ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
                 if((allmasks_array(i,j,k,0) == 1 or allmasks_array(i,j,k,0) == 2) and k==0){
                     std::vector<Real> coords = get_coords(lev, i, j, k, dx0, plo);
