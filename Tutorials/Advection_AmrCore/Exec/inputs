@@ -28,7 +28,7 @@ amr.v              = 1       # verbosity in Amr
 # *****************************************************************
 # Resolution and refinement
 # *****************************************************************
-amr.n_cell          = 64 64 8
+amr.n_cell          = 32 32 8
 amr.max_level       = 2       # maximum level number allowed -- 
                               # number of levels = max_level + 1
 
@@ -65,7 +65,7 @@ adv.do_reflux = 1
 #            if phi > 1.1  at level 1, then refine 
 #            if phi > 1.5  at level 2, then refine 
 # *****************************************************************
-adv.phierr = 1.01  1.1  1.5
+adv.phierr = 1.01  1.1  1.5  1.6 
 
 # *****************************************************************
 # Plotfile name and frequency

@@ -1,5 +1,11 @@
 CEXE_sources += ${EBASE}.cpp
 CEXE_sources += WriteBoxesIntoVTK.cpp
+CEXE_sources += FineMask.cpp
+CEXE_sources += AllMasks.cpp
+CEXE_sources += FindNeighbors.cpp
+CEXE_sources += WriteGraph.cpp
+
+CEXE_headers += Advection_GNN.H
 
 ifneq ($(EBASE), particle_compare)
 ifneq ($(EBASE), WritePlotfileToASCII)
@@ -12,9 +18,9 @@ ifneq ($(EBASE), WritePlotfileToASCII)
   include $(AMREX_HOME)/Src/Extern/amrdata/Make.package
   vpathdir += $(AMREX_HOME)/Src/Extern/amrdata
 
-  ifeq ($(NEEDS_f90_SRC),TRUE)
-    f90EXE_sources += ${EBASE}_nd.f90
-  endif
+  #ifeq ($(NEEDS_f90_SRC),TRUE)
+    #f90EXE_sources += ${EBASE}_nd.f90
+  #endif
 
 endif
 endif

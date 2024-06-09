@@ -1,4 +1,4 @@
-rm -rf WriteGraphInfo3d.gnu.DEBUG.ex
+rm -rf main3d.gnu.ex
 rm -rf *vtk
 make -j
-./WriteGraphInfo3d.gnu.DEBUG.ex infile=../Exec/plt00050 varNames=phi
+./main3d.gnu.ex infile=../Exec/plt00030 varNames=phi

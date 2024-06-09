@@ -1,6 +1,6 @@
 AMREX_HOME ?= ../../..
 
-DEBUG	= TRUE
+DEBUG	= FALSE
 #DEBUG	= FALSE
 
 DIM	= 3
@@ -15,7 +15,7 @@ USE_OMP   = FALSE
 
 ###################################################
 
-EBASE     = WriteGraphInfo
+EBASE     = main
 #EBASE     = PlotfileToMatLab
 #EBASE     = PlotfileToTurb
 #EBASE     = WritePlotfileToASCII
@@ -30,7 +30,7 @@ ifeq ($(EBASE), PtwisePltTransform)
   NEEDS_f90_SRC = TRUE
 else ifeq ($(EBASE), PlotfileToTurb)
   NEEDS_f90_SRC = TRUE
-else ifeq ($(EBASE), WriteGraphInfo)
+else ifeq ($(EBASE), main)
   NEEDS_f90_SRC = TRUE
 else
   NEEDS_f90_SRC = FALSE
