@@ -38,11 +38,22 @@ void FindNeighbors(const int lev,
     			coords = get_coords(lev+1, 2*i, 2*j, k, dx0, plo);
        			vec_coords.push_back(coords);
 			}
+			isnew = quad.addQuadruplet(lev+1, 2*i+1, 2*j, k);
+			if(isnew) {
+    			coords = get_coords(lev+1, 2*i+1, 2*j, k, dx0, plo);
+       			vec_coords.push_back(coords);
+			}
 			isnew = quad.addQuadruplet(lev+1, 2*i, 2*j+1, k);
 			if(isnew) {
        			coords = get_coords(lev+1, 2*i, 2*j+1, k, dx0, plo);
        			vec_coords.push_back(coords);
 			}
+			isnew = quad.addQuadruplet(lev+1, 2*i+1, 2*j+1, k);
+			if(isnew) {
+       			coords = get_coords(lev+1, 2*i+1, 2*j+1, k, dx0, plo);
+       			vec_coords.push_back(coords);
+			}
+
     	}
 	} else if(lev == finest_lev) {
 

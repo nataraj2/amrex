@@ -63,7 +63,7 @@ void WriteGraphForAllLevels(const AmrData& amrData,
 	
 	                AMREX_ALWAYS_ASSERT(quad.get_size() == vec_coords.size()-1);
 	
-	                if(lev == 2 and allmasks_array(i+1,j,k,0) == 1 and allmasks_array(i,j+1,k,0) == 1 ){
+	                if(lev == 1 and finemask_array(i+1,j,k,0) == 1){
 	                	fprintf(file_point,"%s %ld %s\n","POINTS", static_cast<long int>(1), "float");
 	                	fprintf(file_connect,"%s %ld %s\n","POINTS",vec_coords.size(), "float");
 

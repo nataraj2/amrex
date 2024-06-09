@@ -81,9 +81,9 @@ void WriteFineMaskIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
     iMultiFab& finemask_mf = finemask[lev];
     for (MFIter mfi(finemask_mf); mfi.isValid(); ++mfi) {
         Array4<int> const& finemask_array = finemask_mf.array(mfi);
-        Box bx = mfi.validbox();
+        Box bx = mfi.growntilebox(1);
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
-            if(finemask_array(i,j,k,0) == 0 and k==1){
+            if(finemask_array(i,j,k,0) == 1 and k==1){
                 std::vector<Real> coords = get_coords(lev, i, j, k, dx0, plo);
                 fprintf(finemask_vtk, "%0.15g %0.15g %0.15g\n", coords[0], coords[1], coords[2]);
             }

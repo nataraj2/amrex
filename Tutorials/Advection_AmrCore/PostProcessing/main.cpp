@@ -82,13 +82,13 @@ main (int   argc,
 	finemask.resize(nLev);
 	if(nLev > 1){	
 		CreateFineMask(amrData, finemask);
-		WriteFineMaskIntoVTK(amrData, 0, finemask);
+		WriteFineMaskIntoVTK(amrData, 1, finemask);
 	}
 
 	// Build mask to identify cells at coarse-fine interface
 	Vector<iMultiFab> allmasks;
 	CreateAllMasks(amrData, allmasks);
-	WriteAllMasksIntoVTK(amrData, 0, allmasks);
+	WriteAllMasksIntoVTK(amrData, 1, allmasks);
 
 
     Vector<MultiFab> stateout;
