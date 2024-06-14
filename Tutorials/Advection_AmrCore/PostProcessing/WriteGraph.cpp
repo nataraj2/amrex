@@ -3,12 +3,12 @@
 using namespace amrex;	
 	
 void WriteGraphForAllLevels(const AmrData& amrData, 
-										const Vector<iMultiFab>& finemask, 
-										const Vector<iMultiFab>& allmasks, 
-										const Vector<MultiFab>& stateout,
-										const std::string& file_point_str,
-										const std::string& file_neighbors_str,
-										const std::string& file_connect_str)
+						    const Vector<iMultiFab>& finemask, 
+						    const Vector<iMultiFab>& allmasks, 
+							const Vector<MultiFab>& stateout,
+							const std::string& file_point_str,
+							const std::string& file_neighbors_str,
+							const std::string& file_connect_str)
 {	
     FILE* file_point = fopen(file_point_str.c_str(),"w");
 
@@ -39,6 +39,7 @@ void WriteGraphForAllLevels(const AmrData& amrData,
 	
     	const iMultiFab& allmasks_mf = allmasks[lev];	
 		const iMultiFab& finemask_mf = finemask[lev];
+		int ng = allmasks_mf.nGrow();
 	
 	    for (MFIter mfi(finemask_mf); mfi.isValid(); ++mfi) {
 	    	Array4<const int> const& allmasks_array = allmasks_mf.const_array(mfi);
@@ -51,8 +52,8 @@ void WriteGraphForAllLevels(const AmrData& amrData,
 	                vec_coords.push_back(coords);
 	
 	                QuadrupletStore quad;
-	                for(int i_shift=-3; i_shift<=3; i_shift++){
-	                	for(int j_shift=-3; j_shift<=3; j_shift++){
+	                for(int i_shift=-ng; i_shift<=ng; i_shift++){
+	                	for(int j_shift=-ng; j_shift<=ng; j_shift++){
 	                		if(!(i_shift == 0  and j_shift == 0)){
 	                        	FindNeighbors(lev, finest_lev, i+i_shift, j+j_shift, k, 
 											  allmasks_array, finemask_array, dx0, plo, 
@@ -63,7 +64,14 @@ void WriteGraphForAllLevels(const AmrData& amrData,
 	
 	                AMREX_ALWAYS_ASSERT(quad.get_size() == vec_coords.size()-1);
 	
-	                if(lev == 1 and finemask_array(i+1,j,k,0) == 1){
+	                if(lev == 1 and allmasks_array(i+1,j,k,0) == 0 and 
+									allmasks_array(i-1,j,k,0) == 0 and 
+									allmasks_array(i,j+1,k,0) == 0 and 
+									allmasks_array(i,j-1,k,0) == 0 and 
+									allmasks_array(i+2,j,k,0) == 0 and 
+									allmasks_array(i-2,j,k,0) == 0 and 
+									allmasks_array(i,j+2,k,0) == 0 and 
+									allmasks_array(i,j-2,k,0) == 0){
 	                	fprintf(file_point,"%s %ld %s\n","POINTS", static_cast<long int>(1), "float");
 	                	fprintf(file_connect,"%s %ld %s\n","POINTS",vec_coords.size(), "float");
 

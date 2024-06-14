@@ -3,7 +3,7 @@
 using namespace amrex;
 
 
-void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
+void CreateFineMask(const AmrData& amrData, const int ng, Vector<iMultiFab>& finemask)
 {
 	const int nLev = amrData.FinestLevel() + 1;
 	const int finest_lev = amrData.FinestLevel();
@@ -20,7 +20,7 @@ void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
 	for (int lev = 0; lev < nLev; ++lev) {
         const BoxArray ba = amrData.boxArray(lev);
         const DistributionMapping dmap(ba);
-        finemask[lev].define(ba,dmap,1,3);
+        finemask[lev].define(ba,dmap,1,ng);
 		finemask[lev].setVal(-100);
     }
 
@@ -28,7 +28,7 @@ void CreateFineMask(const AmrData& amrData, Vector<iMultiFab>& finemask)
     for (int lev = 0; lev < nLev-1; ++lev) {
         const IntVect ratio{2};
 
-        finemask[lev] = makeFineMask(phi[lev], phi[lev+1], IntVect(3),
+        finemask[lev] = makeFineMask(phi[lev], phi[lev+1], IntVect(ng),
                                           ratio,Periodicity::NonPeriodic(),
                                           0, 1);
     }
@@ -80,8 +80,9 @@ void WriteFineMaskIntoVTK(const AmrData& amrData, const int lev, Vector<iMultiFa
 
     iMultiFab& finemask_mf = finemask[lev];
     for (MFIter mfi(finemask_mf); mfi.isValid(); ++mfi) {
+		const int ng = finemask_mf.nGrow();
         Array4<int> const& finemask_array = finemask_mf.array(mfi);
-        Box bx = mfi.growntilebox(1);
+        Box bx = mfi.growntilebox(ng);
         ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k){
             if(finemask_array(i,j,k,0) == 1 and k==1){
                 std::vector<Real> coords = get_coords(lev, i, j, k, dx0, plo);

@@ -78,7 +78,7 @@ print_usage (int,
              char* argv[])
 {
   std::cerr << "usage:\n";
-  std::cerr << argv[0] << " infile=<plotfilename> varNames=v1 v2 ... \n";
+  std::cerr << argv[0] << " infile=<plotfilename> varNames=v1 v2 ng=<number of layers of cell neighbors for each point for graph> ... \n";
   exit(1);
 }
 
@@ -111,18 +111,18 @@ inline amrex::Vector<amrex::Real> get_coords (const int lev, const int i, const 
     return temp;
 }
 
-
-
 void WriteBoxesIntoVTK(const amrex::AmrData& amrData);
 
 void CreateFineMask(const amrex::AmrData& amrData, 
+					const int ng, 
 					amrex::Vector<amrex::iMultiFab>& finemask);
 
 void WriteFineMaskIntoVTK(const amrex::AmrData& amrData, 
 						  const int lev, 
 						  amrex::Vector<amrex::iMultiFab>& finemask);
 
-void CreateAllMasks(const amrex::AmrData& amrData, 
+void CreateAllMasks(const amrex::AmrData& amrData,
+					const int ng,
 					amrex::Vector<amrex::iMultiFab>& allmasks);
 
 void WriteAllMasksIntoVTK(const amrex::AmrData& amrData, 

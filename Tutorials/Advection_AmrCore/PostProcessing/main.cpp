@@ -25,7 +25,7 @@ main (int   argc,
 {
   amrex::Initialize(argc,argv);
   {
-    if (argc < 2)
+    if (argc < 4)
       print_usage(argc,argv);
 
     ParmParse pp;
@@ -34,7 +34,13 @@ main (int   argc,
     if (farg == "-h" || farg == "--help")
       print_usage(argc,argv);
 
-    std::string infile; pp.get("infile",infile);
+    std::string infile; 
+	pp.get("infile",infile);
+	
+	int ng;
+	pp.get("ng", ng);
+	std::cout << "ng is " << ng << "\n";
+	//exit(0);
     DataServices::SetBatchMode();
     Amrvis::FileType fileType(Amrvis::NEWPLT);
     DataServices dataServices(infile, fileType);
@@ -81,13 +87,13 @@ main (int   argc,
 	Vector<iMultiFab> finemask;
 	finemask.resize(nLev);
 	if(nLev > 1){	
-		CreateFineMask(amrData, finemask);
+		CreateFineMask(amrData, ng, finemask);
 		WriteFineMaskIntoVTK(amrData, 1, finemask);
 	}
 
 	// Build mask to identify cells at coarse-fine interface
 	Vector<iMultiFab> allmasks;
-	CreateAllMasks(amrData, allmasks);
+	CreateAllMasks(amrData, ng, allmasks);
 	WriteAllMasksIntoVTK(amrData, 1, allmasks);
 
 
