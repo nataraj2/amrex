@@ -6,6 +6,7 @@
 #include <AMReX_IndexType.H>
 #include <AMReX_BoxList.H>
 #include <AMReX_Array.H>
+#include <AMReX_Periodicity.H>
 #include <AMReX_Vector.H>
 
 #include <iosfwd>
@@ -614,6 +615,11 @@ public:
 
     BoxArray& maxSize (const IntVect& block_size);
 
+    //! Forces each Box in BoxArray to have sizes >= min_size and <=
+    //! max_size. It's the caller's responsibility to make sure both the
+    //! BoxArray and max_size are coarsenable by min_size.
+    BoxArray& minmaxSize (const IntVect& min_size, const IntVect& max_size);
+
     //! Refine each Box in the BoxArray to the specified ratio.
     BoxArray& refine (int refinement_ratio);
 
@@ -734,6 +740,16 @@ public:
     [[nodiscard]]
     bool contains (const BoxArray& ba, bool assume_disjoint_ba = false,
                    const IntVect& ng = IntVect(0)) const;
+
+    /**
+     * \brief True if all cells in ba are periodically contained in this
+     * BoxArray.
+     *
+     * If a cell after being periodically shifted is contained in this
+     * BoxArray, it's considered being periodically contained.
+     */
+    [[nodiscard]]
+    bool contains (const BoxArray& ba, Periodicity const& period) const;
 
     //! Return smallest Box that contains all Boxes in this BoxArray.
     [[nodiscard]] Box minimalBox () const;

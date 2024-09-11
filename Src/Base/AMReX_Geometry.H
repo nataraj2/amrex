@@ -425,6 +425,14 @@ public:
     */
     void computeRoundoffDomain ();
 
+    //! Returns roundoff domain's lower end
+    [[nodiscard]] GpuArray<ParticleReal, AMREX_SPACEDIM> const&
+    RoundOffLo () const { return roundoff_lo; }
+
+    //! Returns roundoff domain's higher end
+    [[nodiscard]] GpuArray<ParticleReal, AMREX_SPACEDIM> const&
+    RoundOffHi () const { return roundoff_hi; }
+
 private:
     void read_params ();
 
@@ -440,6 +448,8 @@ private:
 
     //
     Box     domain;
+
+    friend std::istream& operator>> (std::istream&, Geometry&);
 };
 
 

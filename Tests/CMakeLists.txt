@@ -121,7 +121,9 @@ else()
    #
    # List of subdirectories to search for CMakeLists.
    #
-   set( AMREX_TESTS_SUBDIRS AsyncOut MultiBlock Reinit Amr CLZ Parser Parser2 CTOParFor RoundoffDomain)
+   set( AMREX_TESTS_SUBDIRS Amr AsyncOut CLZ CTOParFor DeviceGlobal Enum
+                            MultiBlock MultiPeriod Parser Parser2 Reinit
+                            RoundoffDomain)
 
    if (AMReX_PARTICLES)
      list(APPEND AMREX_TESTS_SUBDIRS Particles)
@@ -143,7 +145,7 @@ else()
       list(APPEND AMREX_TESTS_SUBDIRS FortranInterface)
    endif ()
 
-   if (AMReX_CUDA)
+   if (NOT AMReX_GPU_BACKEND STREQUAL NONE)
       list(APPEND AMREX_TESTS_SUBDIRS GPU)
    endif ()
 

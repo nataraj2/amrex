@@ -555,12 +555,27 @@ BoxArray::maxSize (const IntVect& block_size)
     blst.maxSize(block_size);
     const int N = static_cast<int>(blst.size());
     if (size() != N) { // If size doesn't change, do nothing.
-        BoxList bak = (m_simplified_list) ? *m_simplified_list : BoxList();
+        std::shared_ptr<BoxList> bak;
+        bak.swap(m_simplified_list);
         define(std::move(blst));
-        if (bak.isNotEmpty()) {
-            m_simplified_list = std::make_shared<BoxList>(std::move(bak));
-        }
+        m_simplified_list = std::move(bak);
     }
+    return *this;
+}
+
+BoxArray&
+BoxArray::minmaxSize (const IntVect& min_size, const IntVect& max_size)
+{
+    AMREX_ASSERT(this->coarsenable(min_size) &&
+                 (max_size/min_size)*min_size == max_size);
+    std::shared_ptr<BoxList> bak;
+    if (m_bat.is_simple() && crseRatio() == IntVect::TheUnitVector()) {
+        bak.swap(m_simplified_list);
+    }
+    this->coarsen(min_size);
+    this->maxSize(max_size/min_size);
+    this->refine(min_size);
+    m_simplified_list = std::move(bak);
     return *this;
 }
 
@@ -1005,6 +1020,34 @@ BoxArray::contains (const BoxArray& ba, bool assume_disjoint_ba, const IntVect& 
         if (!contains(ba[i],assume_disjoint_ba, ng)) {
             return false;
         }
+    }
+
+    return true;
+}
+
+bool
+BoxArray::contains (const BoxArray& ba, Periodicity const& period) const
+{
+    if (size() == 0) { return false; }
+
+    if (! period.isAnyPeriodic()) { return contains(ba); }
+
+    auto const& pshifts = period.shiftIntVect();
+
+    std::vector< std::pair<int,Box> > isects;
+    BoxList bl(ba.ixType());
+
+    for (int i = 0, N = static_cast<int>(ba.size()); i < N; ++i) {
+        Box const& b = ba[i];
+        bl.clear();
+        for (auto const& pit: pshifts) {
+            intersections(b+pit, isects);
+            for (auto const& is : isects) {
+                bl.push_back(is.second - pit);
+            }
+        }
+        BoxList const& left = amrex::complementIn(b, bl);
+        if (left.isNotEmpty()) { return false; }
     }
 
     return true;
