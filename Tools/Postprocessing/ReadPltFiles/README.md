@@ -8,6 +8,6 @@ The plot files to be read in should be placed in this directory.
    `make -j`
 6. `./<executable> infile=<plt filename> varNames=var1 var2 var3`  
 So for eg.     
-`./main2d.gnu.ex infile=plt_00000 varNames=x_velocity y_velocity`
+`./main2d.gnu.ex infile=plt_00000 varNames=x_velocity y_velocity`  
 Note that currently the `fprintf` to write the `csv` files are hard coded for 2D 
 and 2 variables. 
