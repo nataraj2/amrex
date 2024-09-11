@@ -69,7 +69,7 @@ main (int   argc,
 
 	FILE* outfile;
 	outfile = fopen("solution.csv","w");
-	fprintf(outfile,"%s, %s, %s, %s, %s\n", "x", "y", "z", "phi1", "phi2");
+	fprintf(outfile,"%s, %s, %s, %s, %s\n", "x", "y", "z", "x_velocity", "y_velocity");
 	
     Vector<MultiFab> stateout;
 	stateout.resize(nLev);
