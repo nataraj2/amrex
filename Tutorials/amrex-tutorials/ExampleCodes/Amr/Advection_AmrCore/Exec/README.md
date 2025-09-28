@@ -16,6 +16,6 @@ cd PythonScripts
 srun -n 64 python3 PlotAMReXFile_Parallel.py ../ --var=phi --axis=z --location=0.1
 ```
 This processes the files with yt using 64 MPI ranks. It writes images of 2D z-slices at a location 
-of z=0.1.
+of z=0.1. The images are written in `../Images/`
 
 
