@@ -1,9 +1,9 @@
 # Example for using yt in parallel 
 
-This example gives the Python scripts for processing amrex plt files using yt     
-with MPI. For eg., if there are 128 files and 64 MPI ranks, then each rank processes   
-2 files each. There is no parallelization within the processing of a single plot file. 
-Here are the steps to process the plot files using yt.
+This example gives the Python scripts for processing amrex plt files using yt with MPI. 
+For eg., if there are 128 files and 64 MPI ranks, then each rank processes 2 files each. 
+There is no parallelization within the processing of a single plot file. Here are the steps 
+to process the plot files using yt.
 
 ```
 cd PythonScripts
