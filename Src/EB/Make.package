@@ -106,10 +106,13 @@ ifeq ($(DIM),3)
    CEXE_headers += AMReX_MarchingCubes.H AMReX_mc_jgt_table.H
 endif
 
+CEXE_headers += AMReX_EB2_DistributedGeometryShop.H
+
 ifneq ($(BL_NO_FORT),TRUE)
   F90EXE_sources += AMReX_ebcellflag_mod.F90
   F90EXE_sources += AMReX_EBFluxRegister_nd.F90
 endif
+
 
 VPATH_LOCATIONS += $(AMREX_HOME)/Src/EB
 INCLUDE_LOCATIONS += $(AMREX_HOME)/Src/EB
