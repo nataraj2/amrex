@@ -76,6 +76,7 @@ foreach(D IN LISTS AMReX_SPACEDIM)
        AMReX_EB2_IF_DevicePtr.H
        AMReX_distFcnElement.cpp
        AMReX_EB2_GeometryShop.H
+       AMReX_EB2_DistributedGeometryShop.H
        AMReX_EB2.H
        AMReX_EB2_IndexSpaceI.H
        AMReX_EB2_Level.H
