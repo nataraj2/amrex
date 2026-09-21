@@ -78,7 +78,7 @@ public:
             }
         }
 
-        if (lev == -1) return 1.0_rt; // Outside all defined SDF regions
+        if (lev == -1) return -1.0_rt; // Outside all defined SDF regions
 
         const auto& geom = m_geoms[lev];
         const auto& mf = *m_mfs[lev];
@@ -99,17 +99,19 @@ public:
         Real ty = fy - j;
         Real tz = fz - k;
 
-        // Helper to find the correct FArrayBox for a given global index.
-        auto get_val = [&](int ii, int jj, int kk) {
+        auto get_val = [&](int ii, int jj, int kk) -> Real {
             IntVect iv(ii, jj, kk);
-            const auto& boxes = mf.boxArray();
-            for (int b = 0; b < (int)boxes.size(); ++b) {
-                if (boxes[b].contains(iv)) {
-                    return mf[b](iv);
+
+            const auto& ba = mf.boxArray();
+            const auto& dm = mf.DistributionMap();
+
+            for (int b = 0; b < ba.size(); ++b) {
+                if (ba[b].contains(iv) &&
+                    dm[b] == ParallelDescriptor::MyProc()) {
+                    const FArrayBox* fab = mf.fabPtr(b);
+                    return (*fab)(iv, 0);
                 }
             }
-            // If out of bounds of current level's boxes, we fall back to 0 or
-            // technically we should have stayed at a coarser level.
             return 0.0_rt;
         };
 
@@ -122,10 +124,10 @@ public:
         Real v011 = get_val(i, j+1, k+1);
         Real v111 = get_val(i+1, j+1, k+1);
 
-        return (1-tx)*(1-ty)*(1-tz)*v000 + tx*(1-ty)*(1-tz)*v100 +
+        return -1.0*((1-tx)*(1-ty)*(1-tz)*v000 + tx*(1-ty)*(1-tz)*v100 +
                (1-tx)*ty*(1-tz)*v010 + tx*ty*(1-tz)*v110 +
                (1-tx)*(1-ty)*tz*v001 + tx*(1-ty)*tz*v101 +
-               (1-tx)*ty*tz*v011 + tx*ty*tz*v111;
+               (1-tx)*ty*tz*v011 + tx*ty*tz*v111);
     }
 
 private:
